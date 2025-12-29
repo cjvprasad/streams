@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Java Stream API Guide</title>
+    <style>
+        /* --- CSS Variables (Dark Mode Default) --- */
+        :root {
+            --primary-color: #58a6ff; /* Soft Blue for Dark Mode */
+            --secondary-color: #161b22; /* Sidebar/Darker BG */
+            --bg-color: #0d1117; /* Main Content BG */
+            --card-bg: #21262d;
+            --text-color: #c9d1d9;
+            --heading-color: #f0f6fc;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --code-text: #7ee787; /* Green for code */
+            --highlight-color: #ffd700;
+            --active-link-bg: rgba(56, 139, 253, 0.15);
+            --active-link-border: #58a6ff;
+            --search-bg: #30363d;
+            --search-text: #fff;
+            
+            /* Card Stripe Colors */
+            --c-filter: #ff7b72; /* Red */
+            --c-map: #79c0ff;    /* Blue */
+            --c-sort: #e3b341;   /* Yellow */
+            --c-find: #d2a8ff;   /* Purple */
+            --c-reduce: #7ee787; /* Green */
+            --c-iter: #ffa657;   /* Orange */
+            --c-factory: #8b949e;/* Grey */
+        }
+
+        /* --- Light Theme Overrides --- */
+        body.light-theme {
+            --primary-color: #0969da;
+            --secondary-color: #f6f8fa;
+            --bg-color: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #24292f;
+            --heading-color: #24292f;
+            --border-color: #d0d7de;
+            --code-bg: #f6f8fa;
+            --code-text: #1a7f37;
+            --search-bg: #ffffff;
+            --search-text: #24292f;
+            --active-link-bg: #ddf4ff;
+        }
+
+        /* --- Layout --- */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background-color: var(--secondary-color);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar h3 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .search-container {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background-color: var(--secondary-color);
+            z-index: 10;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--search-bg);
+            color: var(--search-text);
+            box-sizing: border-box;
+            outline: none;
+        }
+        #searchInput:focus {
+            border-color: var(--primary-color);
+        }
+
+        .nav-items {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 10px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: var(--border-color);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background-color: var(--active-link-bg);
+            border-left-color: var(--active-link-border);
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* --- Main Content --- */
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        h1 { margin-top: 0; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
+        
+        /* Section styling for ScrollSpy */
+        .section {
+            scroll-margin-top: 20px; /* Offset for sticky headers if needed */
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--heading-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- Grid & Cards --- */
+        .stream-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .stream-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            border-top: 4px solid #ccc;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stream-card:hover { transform: translateY(-3px); }
+
+        /* Card Colors */
+        .card-filter { border-top-color: var(--c-filter); }
+        .card-map { border-top-color: var(--c-map); }
+        .card-sort { border-top-color: var(--c-sort); }
+        .card-find { border-top-color: var(--c-find); }
+        .card-reduce { border-top-color: var(--c-reduce); }
+        .card-iter { border-top-color: var(--c-iter); }
+        .card-factory { border-top-color: var(--c-factory); }
+
+        .method-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .method-name {
+            font-family: 'Consolas', monospace;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .badge {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            text-transform: uppercase;
+        }
+
+        .desc {
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+
+        .code-block {
+            background-color: var(--code-bg);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85em;
+            color: var(--code-text);
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        /* --- Theme Toggle --- */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1000;
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* Highlight for search */
+        mark { background-color: var(--highlight-color); color: #000; padding: 0 2px; }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; }
+            .content { margin-left: 0; padding: 20px; }
+            .theme-toggle { top: 15px; right: 15px; }
+            .search-container { position: relative; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀ Light Mode</button>
+
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h3>Java Stream API</h3>
+    </div>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search methods...">
+    </div>
+    <div class="nav-items">
+        <a href="#filtering" class="nav-link">Filtering & Slicing</a>
+        <a href="#mapping" class="nav-link">Mapping & Transforming</a>
+        <a href="#sorting" class="nav-link">Sorting & Debugging</a>
+        <a href="#finding" class="nav-link">Finding & Matching</a>
+        <a href="#reducing" class="nav-link">Reducing & Collecting</a>
+        <a href="#iterating" class="nav-link">Iterating</a>
+        <a href="#factories" class="nav-link">Factories</a>
+    </div>
+</div>
+
+<div class="content" id="mainContent">
+
+    <h1>Stream API Reference Guide</h1>
+
+    <div id="filtering" class="section">
+        <div class="section-title">✂️ Filtering & Slicing</div>
+        <div class="stream-grid">
+            <div class="stream-card card-filter" data-keywords="filter predicate lazy">
+                <div class="method-header">
+                    <span class="method-name">filter</span>
+                    <span class="badge">Lazy</span>
+                </div>
+                <div class="desc">Keeps elements that match the predicate logic.</div>
+                <div class="code-block">stream.filter(s -> s.length() > 3)</div>
+            </div>
+            <div class="stream-card card-filter" data-keywords="distinct unique duplicate stateful">
+                <div class="method-header">
+                    <span class="method-name">distinct</span>
+                    <span class="badge">Stateful</span>
+                </div>
+                <div class="desc">Removes duplicates based on <code>equals()</code>.</div>
+                <div class="code-block">stream.distinct()</div>
+            </div>
+            <div class="stream-card card-filter" data-keywords="limit truncate short-circuit">
+                <div class="method-header">
+                    <span class="method-name">limit</span>
+                    <span class="badge">Short-circuit</span>
+                </div>
+                <div class="desc">Truncates the stream to 'n' elements.</div>
+                <div class="code-block">stream.limit(5)</div>
+            </div>
+            <div class="stream-card card-filter" data-keywords="skip discard offset">
+                <div class="method-header">
+                    <span class="method-name">skip</span>
+                    <span class="badge">Lazy</span>
+                </div>
+                <div class="desc">Discards the first 'n' elements.</div>
+                <div class="code-block">stream.skip(2)</div>
+            </div>
+            <div class="stream-card card-filter" data-keywords="takeWhile java9 conditional">
+                <div class="method-header">
+                    <span class="method-name">takeWhile</span>
+                    <span class="badge">Java 9</span>
+                </div>
+                <div class="desc">Takes elements until condition fails.</div>
+                <div class="code-block">stream.takeWhile(n -> n < 10)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mapping" class="section">
+        <div class="section-title">🔄 Mapping & Transforming</div>
+        <div class="stream-grid">
+            <div class="stream-card card-map" data-keywords="map transform convert function">
+                <div class="method-header">
+                    <span class="method-name">map</span>
+                    <span class="badge">Lazy</span>
+                </div>
+                <div class="desc">Applies a function to each element (1-to-1).</div>
+                <div class="code-block">stream.map(String::toUpperCase)</div>
+            </div>
+            <div class="stream-card card-map" data-keywords="mapToInt primitive unbox">
+                <div class="method-header">
+                    <span class="method-name">mapToInt</span>
+                    <span class="badge">Primitive</span>
+                </div>
+                <div class="desc">Unboxes to <code>IntStream</code> (also mapToDouble).</div>
+                <div class="code-block">stream.mapToInt(User::getAge)</div>
+            </div>
+            <div class="stream-card card-map" data-keywords="flatMap flatten nested list">
+                <div class="method-header">
+                    <span class="method-name">flatMap</span>
+                    <span class="badge">Lazy</span>
+                </div>
+                <div class="desc">Flattens nested structures (1-to-Many).</div>
+                <div class="code-block">stream.flatMap(List::stream)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sorting" class="section">
+        <div class="section-title">📊 Sorting & Debugging</div>
+        <div class="stream-grid">
+            <div class="stream-card card-sort" data-keywords="sorted order natural stateful">
+                <div class="method-header">
+                    <span class="method-name">sorted</span>
+                    <span class="badge">Stateful</span>
+                </div>
+                <div class="desc">Sorts in natural order (Comparable).</div>
+                <div class="code-block">stream.sorted()</div>
+            </div>
+            <div class="stream-card card-sort" data-keywords="peek debug log side-effect">
+                <div class="method-header">
+                    <span class="method-name">peek</span>
+                    <span class="badge">Debug</span>
+                </div>
+                <div class="desc">Performs action without modifying stream.</div>
+                <div class="code-block">stream.peek(System.out::println)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="finding" class="section">
+        <div class="section-title">🔍 Finding & Matching</div>
+        <div class="stream-grid">
+            <div class="stream-card card-find" data-keywords="findFirst optional terminal">
+                <div class="method-header">
+                    <span class="method-name">findFirst</span>
+                    <span class="badge">Optional</span>
+                </div>
+                <div class="desc">Returns first element (Deterministic).</div>
+                <div class="code-block">stream.findFirst()</div>
+            </div>
+            <div class="stream-card card-find" data-keywords="anyMatch boolean check">
+                <div class="method-header">
+                    <span class="method-name">anyMatch</span>
+                    <span class="badge">Boolean</span>
+                </div>
+                <div class="desc">True if at least one element matches.</div>
+                <div class="code-block">stream.anyMatch(s -> s.isEmpty())</div>
+            </div>
+            <div class="stream-card card-find" data-keywords="allMatch boolean check">
+                <div class="method-header">
+                    <span class="method-name">allMatch</span>
+                    <span class="badge">Boolean</span>
+                </div>
+                <div class="desc">True if ALL elements match.</div>
+                <div class="code-block">stream.allMatch(n -> n > 0)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reducing" class="section">
+        <div class="section-title">📦 Reducing & Collecting</div>
+        <div class="stream-grid">
+            <div class="stream-card card-reduce" data-keywords="collect list set map container">
+                <div class="method-header">
+                    <span class="method-name">collect</span>
+                    <span class="badge">Mutable</span>
+                </div>
+                <div class="desc">Accumulate into List, Map, Set etc.</div>
+                <div class="code-block">stream.collect(Collectors.toList())</div>
+            </div>
+            <div class="stream-card card-reduce" data-keywords="reduce fold accumulate sum">
+                <div class="method-header">
+                    <span class="method-name">reduce</span>
+                    <span class="badge">Immutable</span>
+                </div>
+                <div class="desc">Combine elements into single value.</div>
+                <div class="code-block">stream.reduce(0, (a, b) -> a + b)</div>
+            </div>
+            <div class="stream-card card-reduce" data-keywords="count size long">
+                <div class="method-header">
+                    <span class="method-name">count</span>
+                    <span class="badge">Long</span>
+                </div>
+                <div class="desc">Returns number of elements.</div>
+                <div class="code-block">stream.count()</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="iterating" class="section">
+        <div class="section-title">🔄 Iterating</div>
+        <div class="stream-grid">
+             <div class="stream-card card-iter" data-keywords="forEach loop consume">
+                <div class="method-header">
+                    <span class="method-name">forEach</span>
+                    <span class="badge">Terminal</span>
+                </div>
+                <div class="desc">Runs action for each element.</div>
+                <div class="code-block">stream.forEach(System.out::println)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="factories" class="section">
+        <div class="section-title">🏭 Factories</div>
+        <div class="stream-grid">
+            <div class="stream-card card-factory" data-keywords="of create static">
+                <div class="method-header">
+                    <span class="method-name">Stream.of</span>
+                    <span class="badge">Create</span>
+                </div>
+                <div class="desc">Creates stream from explicit values.</div>
+                <div class="code-block">Stream.of("A", "B", "C")</div>
+            </div>
+             <div class="stream-card card-factory" data-keywords="generate infinite random">
+                <div class="method-header">
+                    <span class="method-name">Stream.generate</span>
+                    <span class="badge">Infinite</span>
+                </div>
+                <div class="desc">Infinite stream from Supplier.</div>
+                <div class="code-block">Stream.generate(Math::random)</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- Theme Toggle ---
+    function toggleTheme() {
+        const body = document.body;
+        const button = document.getElementById('themeToggle');
+        body.classList.toggle('light-theme');
+        
+        if (body.classList.contains('light-theme')) {
+            button.innerText = '☾ Dark Mode';
+        } else {
+            button.innerText = '☀ Light Mode';
+        }
+    }
+
+    // --- Search Logic (Filters Cards) ---
+    const searchInput = document.getElementById('searchInput');
+    const cards = document.querySelectorAll('.stream-card');
+
+    searchInput.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        
+        cards.forEach(card => {
+            // Check method name, description, and hidden keywords
+            const text = card.innerText.toLowerCase();
+            const keywords = card.getAttribute('data-keywords') || "";
+            
+            if (text.includes(term) || keywords.includes(term)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    });
+
+    // --- Active Section ScrollSpy ---
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Remove active from all
+                navLinks.forEach(link => link.classList.remove('active'));
+                
+                // Add active to current
+                const id = entry.target.getAttribute('id');
+                const activeLink = document.querySelector(`.sidebar a[href="#${id}"]`);
+                if (activeLink) activeLink.classList.add('active');
+            }
+        });
+    }, {
+        rootMargin: '-10% 0px -70% 0px' // Adjust trigger point
+    });
+
+    sections.forEach(section => observer.observe(section));
+</script>
+
+</body>
+</html>
